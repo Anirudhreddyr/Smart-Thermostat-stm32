@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "platform_uart.h"
+#include "event_queue.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,21 +100,29 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-
+	
   platform_uart_send("Smart Thermostat Booted\r\n");
-
+  event_queue_init();
   /* USER CODE END 2 */
-
+	
+  /* to test queue event */
+  event_t test_event = {EVENT_TEMP_UPDATE, 28};
+  event_queue_push(test_event);
+	
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
 	HAL_GPIO_TogglePin(GPIOA, HEATER_RELAY_Pin);
-
-	/* platform_uart_send("Thermostat Running\r\n"); */
-
 	HAL_Delay(1000);
+	/* platform_uart_send("Thermostat Running\r\n"); */
+ 
+	event_t event;
+	if (event_queue_pop(&event) == 0)
+	{
+		platform_uart_send("Event received\r\n");
+	}	
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
