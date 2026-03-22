@@ -65,7 +65,10 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
-
+void task_hello(void)
+{
+	platform_uart_send("Scheduler Task Running\r\n");
+}
 /**
   * @brief  The application entry point.
   * @retval int
@@ -102,7 +105,11 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
 	
   platform_uart_send("Smart Thermostat Booted\r\n");
+
   event_queue_init();
+  event_queue_init();
+  scheduler_init();
+  scheduler_add_task(task_hello, 5);
   /* USER CODE END 2 */
 	
   /* to test queue event */
@@ -122,7 +129,9 @@ int main(void)
 	if (event_queue_pop(&event) == 0)
 	{
 		platform_uart_send("Event received\r\n");
-	}	
+	}
+	scheduler_tick();
+    scheduler_run();
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
