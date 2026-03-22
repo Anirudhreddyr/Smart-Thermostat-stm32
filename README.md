@@ -1,5 +1,4 @@
-#System Architecture Diagram
-
+System Architecture Diagram
 flowchart TD
 
 User[User / UART Terminal]
