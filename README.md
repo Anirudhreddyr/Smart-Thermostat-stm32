@@ -111,3 +111,68 @@
     
     Continue --> NextLoop
 ```
+
+### Thermostat Control Logic
+
+```mermaid
+    flowchart TD
+
+    TempSensor[Read Temperature]
+    
+    TempSensor --> Compare{Compare with Target}
+    
+    Compare -- Below Target --> HeatingON[Turn Heating ON]
+    
+    Compare -- Above Target --> HVACOFF[Turn HVAC OFF]
+    
+    HeatingON --> HVAC
+    
+    HVACOFF --> HVAC
+```
+
+### Full System Data Flow
+
+```mermaid
+    flowchart LR
+
+    UART --> Parser
+    Parser --> Queue
+    Queue --> Processor
+    Processor --> Security
+    Security --> Scheduler
+    Scheduler --> Controller
+    Controller --> HVAC
+    Controller --> Optimizer
+```
+
+### Folder Structure Diagram
+
+```mermaid
+    flowchart TB
+    
+    Project[Smart Thermostat]
+    
+    Project --> App
+    Project --> Middleware
+    Project --> Security
+    Project --> Platform
+    Project --> ThirdParty
+    
+    App --> ThermostatController
+    App --> Scheduler
+    App --> EnergyOptimizer
+    
+    Middleware --> WebServer
+    Middleware --> RequestQueue
+    Middleware --> CommandProcessor
+    
+    Security --> CryptoEngine
+    Security --> Authenticator
+    
+    Platform --> UART
+    Platform --> RTC
+    Platform --> Sensor
+    Platform --> HVAC
+    
+    ThirdParty --> JSMN
+```
