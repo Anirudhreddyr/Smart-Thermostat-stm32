@@ -10,7 +10,19 @@ Key capabilities include:
 - Adaptive energy optimization based on usage patterns
 - Modular embedded architecture for scalability
 
-## System Architecture
+### System Architecture Diagram
+
+This diagram shows the end-to-end flow of data through the system.
+
+- User sends commands via UART interface
+- WebServer parses incoming data into structured requests
+- Requests are stored in a queue for controlled processing
+- Command Processor interprets commands and triggers actions
+- JSON Parser extracts data from payloads
+- Authentication ensures only authorized commands are executed
+- Scheduler and Thermostat Controller manage temperature logic
+- Energy Optimizer improves efficiency based on usage patterns
+- Final output controls the HVAC system
 
 ```mermaid
     flowchart TD
