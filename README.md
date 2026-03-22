@@ -91,3 +91,23 @@
     Auth->>Thermostat: Execute Command
     Thermostat-->>User: Send Response
 ```
+
+### Scheduler Runtime Logic
+
+```mermaid
+    flowchart TD
+    
+    RTC[RTC Time]
+    
+    RTC --> Scheduler
+    
+    Scheduler --> CheckSchedule{Schedule Match?}
+    
+    CheckSchedule -- Yes --> UpdateTemp[Update Target Temperature]
+    
+    UpdateTemp --> ThermostatController
+    
+    CheckSchedule -- No --> Continue
+    
+    Continue --> NextLoop
+```
