@@ -67,3 +67,27 @@
     EnergyOptimizer --> ThermostatController
     ThermostatController --> PlatformHVAC
 ```
+
+### Command Processing Flow
+
+```mermaid
+    sequenceDiagram
+    
+    participant User
+    participant UART
+    participant WebServer
+    participant Queue
+    participant CommandProcessor
+    participant JSONParser
+    participant Auth
+    participant Thermostat
+    
+    User->>UART: Send Command
+    UART->>WebServer: Receive Data
+    WebServer->>Queue: Push Request
+    Queue->>CommandProcessor: Pop Request
+    CommandProcessor->>JSONParser: Parse JSON
+    JSONParser->>Auth: Verify Token
+    Auth->>Thermostat: Execute Command
+    Thermostat-->>User: Send Response
+```
