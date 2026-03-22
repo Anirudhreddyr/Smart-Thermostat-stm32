@@ -51,7 +51,15 @@ This diagram shows the end-to-end flow of data through the system.
     EnergyOptimizer --> ThermostatController
 ```
 
-### Firmware Layer Architecture
+### Layer Architecture
+The firmware is divided into logical layers to improve modularity and maintainability.
+
+- Application Layer: Core system logic (thermostat, scheduler, optimization)
+- Middleware Layer: Handles communication and data processing
+- Security Layer: Provides encryption and authentication
+- Platform Layer: Interfaces with hardware peripherals
+
+Each layer has a clear responsibility and minimal coupling with others.
 
 ```mermaid
     flowchart TB
@@ -93,6 +101,18 @@ This diagram shows the end-to-end flow of data through the system.
 ```
 
 ### Command Processing Flow
+This sequence diagram illustrates how a command is processed:
+
+- User sends a command through UART
+- WebServer receives and parses the request
+- Request is pushed into a queue
+- Command Processor retrieves the request
+- JSON Parser extracts command parameters
+- Authentication verifies access permissions
+- Valid commands are executed by the thermostat system
+- Response is sent back to the user
+
+This flow ensures structured and secure command handling.
 
 ```mermaid
     sequenceDiagram
@@ -116,7 +136,17 @@ This diagram shows the end-to-end flow of data through the system.
     Thermostat-->>User: Send Response
 ```
 
-### Scheduler Runtime Logic
+### Scheduler Logic
+
+The scheduler manages time-based temperature control using RTC.
+
+- RTC provides current system time
+- Scheduler checks if a schedule entry matches current time
+- If a match is found, target temperature is updated
+- Scheduler avoids repeated triggers within the same minute
+- Ensures automated temperature control throughout the day
+
+This enables energy-efficient and user-defined temperature scheduling.
 
 ```mermaid
     flowchart TD
@@ -137,6 +167,16 @@ This diagram shows the end-to-end flow of data through the system.
 ```
 
 ### Thermostat Control Logic
+
+This diagram shows how temperature control decisions are made.
+
+- Current temperature is read from sensor
+- Compared with target temperature
+- If below target → heating is turned ON
+- If above target → HVAC is turned OFF
+- Hysteresis is used to avoid frequent ON/OFF switching
+
+This ensures stable and efficient temperature regulation.
 
 ```mermaid
     flowchart TD
@@ -169,7 +209,17 @@ This diagram shows the end-to-end flow of data through the system.
     Controller --> Optimizer
 ```
 
-### Folder Structure Diagram
+### Folder Structure
+
+The project is organized into modular directories:
+
+- app/: Core application logic (thermostat, scheduler, optimizer)
+- middleware/: Communication and request handling
+- security/: Encryption and authentication modules
+- platform/: Hardware abstraction layer
+- third_party/: External libraries (e.g., JSON parser)
+
+This structure ensures clear separation of concerns and easy scalability.
 
 ```mermaid
     flowchart TB
