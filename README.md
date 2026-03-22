@@ -26,3 +26,44 @@
     
     EnergyOptimizer --> ThermostatController
 ```
+
+### Firmware Layer Architecture
+
+```mermaid
+    flowchart TB
+    
+    subgraph Application Layer
+    ThermostatController
+    Scheduler
+    EnergyOptimizer
+    end
+    
+    subgraph Middleware Layer
+    WebServer
+    RequestQueue
+    CommandProcessor
+    JSONParser
+    end
+    
+    subgraph Security Layer
+    CryptoEngine
+    Authenticator
+    end
+    
+    subgraph Platform Layer
+    PlatformUART
+    PlatformRTC
+    PlatformSensor
+    PlatformHVAC
+    end
+    
+    PlatformUART --> WebServer
+    WebServer --> RequestQueue
+    RequestQueue --> CommandProcessor
+    CommandProcessor --> JSONParser
+    JSONParser --> Authenticator
+    
+    Scheduler --> ThermostatController
+    EnergyOptimizer --> ThermostatController
+    ThermostatController --> PlatformHVAC
+```
