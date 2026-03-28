@@ -2,7 +2,7 @@
 /**
   ******************************************************************************
   * @file           : main.c
-  * @brief          : Main Program
+  * @brief          : Main program body
   ******************************************************************************
   * @attention
   *
@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "platform_uart.h"
 #include "event_queue.h"
+#include "command_processor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +66,7 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
+
 void task_hello(void)
 {
 	platform_uart_send("Scheduler Task Running\r\n");
@@ -103,19 +105,21 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim2);
-	
+
   platform_uart_send("Smart Thermostat Booted\r\n");
 
-  event_queue_init();
   event_queue_init();
   scheduler_init();
   scheduler_add_task(task_hello, 5);
   /* USER CODE END 2 */
-	
-  /* to test queue event */
+
+  // to test queue event
   event_t test_event = {EVENT_TEMP_UPDATE, 28};
   event_queue_push(test_event);
-	
+
+  command_processor_init();
+  command_processor_process("TEMP 25");
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -124,14 +128,25 @@ int main(void)
 	HAL_GPIO_TogglePin(GPIOA, HEATER_RELAY_Pin);
 	HAL_Delay(1000);
 	/* platform_uart_send("Thermostat Running\r\n"); */
- 
+
 	event_t event;
+
 	if (event_queue_pop(&event) == 0)
 	{
 		platform_uart_send("Event received\r\n");
 	}
+
 	scheduler_tick();
     scheduler_run();
+
+    if (event_queue_pop(&event) == 0)
+    {
+        if(event.type == EVENT_SET_TEMPERATURE)
+        {
+            platform_uart_send("Event: Set Temperature\r\n");
+        }
+    }
+
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
