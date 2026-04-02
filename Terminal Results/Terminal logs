@@ -1,1 +1,10 @@
 
+A) Platform uart test
+
+B) Event queue test
+
+C) Scheduler runner
+
+D) Command Processor
+
+E) UART RX Interrupt not accepting properly
