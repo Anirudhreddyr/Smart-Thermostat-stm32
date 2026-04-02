@@ -24,6 +24,7 @@
 #include "platform_uart.h"
 #include "event_queue.h"
 #include "command_processor.h"
+#include "scheduler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -49,6 +50,11 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+#define RX_BUFFER_SIZE 50
+
+uint8_t rx_char;
+char rx_buffer[RX_BUFFER_SIZE];
+uint8_t rx_index = 0;
 
 /* USER CODE END PV */
 
@@ -111,13 +117,16 @@ int main(void)
   event_queue_init();
   scheduler_init();
   scheduler_add_task(task_hello, 5);
+
+  // Enable UART Interrupt
+  HAL_UART_Receive_IT(&huart2, &rx_char, 1);
   /* USER CODE END 2 */
 
   // to test queue event
   event_t test_event = {EVENT_TEMP_UPDATE, 28};
   event_queue_push(test_event);
 
-  command_processor_init();
+
   command_processor_process("TEMP 25");
 
   /* Infinite loop */
@@ -128,26 +137,25 @@ int main(void)
 	HAL_GPIO_TogglePin(GPIOA, HEATER_RELAY_Pin);
 	HAL_Delay(1000);
 	/* platform_uart_send("Thermostat Running\r\n"); */
+	scheduler_tick();
+	scheduler_run();
 
 	event_t event;
 
 	if (event_queue_pop(&event) == 0)
-	{
-		platform_uart_send("Event received\r\n");
-	}
-
-	scheduler_tick();
-    scheduler_run();
-
-    if (event_queue_pop(&event) == 0)
     {
-        if(event.type == EVENT_SET_TEMPERATURE)
+        switch(event.type)
         {
-            platform_uart_send("Event: Set Temperature\r\n");
+        	case EVENT_SET_TEMPERATURE:
+        		platform_uart_send("Event: Set Temperature\r\n");
+        		break;
+
+        	case EVENT_TEMP_UPDATE:
+        		platform_uart_send("Event: Temperature Update\r\n");
+        		break;
         }
     }
-
-    /* USER CODE BEGIN 3 */
+	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
@@ -370,3 +378,28 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+        if (rx_char == '\r' || rx_char == '\n')
+        {
+            if (rx_index > 0)   /
+            {
+                rx_buffer[rx_index] = '\0';
+                command_processor_process(rx_buffer);
+                rx_index = 0;
+            }
+        }
+        else
+        {
+            if (rx_index < RX_BUFFER_SIZE - 1)
+            {
+                rx_buffer[rx_index++] = rx_char;
+            }
+        }
+
+        HAL_UART_Receive_IT(&huart2, &rx_char, 1);
+    }
+}
