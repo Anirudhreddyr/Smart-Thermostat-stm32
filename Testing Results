@@ -1,1 +1,46 @@
 
+##Bug 101:
+Issue Summary : In Main.c Pop events twice in main loop due this events getting lost.
+
+Debug Observations: 
+	• First event_queue_pop() consumes the event
+	• Second event_queue_pop() finds nothing
+
+Fix: Pop operation done only once, post fix Never pop the same queue twice.
+
+##Bug 102:
+Issue Summary : In Main.c   process '\r' and '\n' → EMPTY command → Unknown command
+
+Debug Observations:
+	• Most terminals send \r\n
+	• \r → processes command it works.
+	• \n → processes empty string it won't work.
+	• Results That empty string prints: Unknown command.
+
+Fix: ignore empty commands, 
+
+==================================================
+if (rx_char == '\r' || rx_char == '\n')
+{
+    if (rx_index > 0)
+    {
+        rx_buffer[rx_index] = '\0';
+        command_processor_process(rx_buffer);
+        rx_index = 0;
+    }
+}
+==================================================
+
+##Bug 103:   In Main.c  calling command_processor_process() before system is ready
+
+Debug Observations:
+	• This sends a fake command
+	• Happens before main loop
+	• Confuses testing and hides real UART issues.
+
+Fix: Control temperature only via UART.
+
+Removal of  init()
+
+command_processor_init(); /* Removed this */
+command_processor_process("TEMP 25");
