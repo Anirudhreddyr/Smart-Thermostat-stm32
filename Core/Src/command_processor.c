@@ -28,6 +28,8 @@ void command_processor_process(char *cmd)
 		event.type = EVENT_SET_TEMPERATURE;
 		event.data = value;
 
+		event_queue_push(event);
+
 		platform_uart_send("Temperature Set Command Received\r\n");
 	}
 	else if (strncmp(cmd, "STATUS", 6) == 0)
