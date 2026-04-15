@@ -1,27 +1,16 @@
 /*
- * platform_uart.c
+ * platform_uart.h
  *
  *  Created on: Mar 16, 2026
  *      Author: anirudhr
  */
-#include "platform_uart.h"
-#include "main.h"
-#include <string.h>
 
-extern UART_HandleTypeDef huart2;
+#ifndef PLATFORM_UART_H
+#define PLATFORM_UART_H
 
-void platform_uart_init(void)
-{
-	/* HAL already initialized UART in main.c */
-}
+#include <stdint.h>
 
-void platform_uart_send(const char *msg)
-{
-	uint16_t len = strlen(msg);
+void platform_uart_init(void);
+void platform_uart_send(const char *msg);
 
-	HAL_UART_Transmit(&huart2,
-					  (uint8_t*)msg,
-					  len,
-					  HAL_MAX_DELAY);
-}
-
+#endif /* PLATFORM_UART_H */
