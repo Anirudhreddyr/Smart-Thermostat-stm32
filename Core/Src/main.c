@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -25,6 +26,7 @@
 #include "event_queue.h"
 #include "command_processor.h"
 #include "scheduler.h"
+#include "thermostat_controller.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,10 @@ uint8_t rx_char;
 char rx_buffer[RX_BUFFER_SIZE];
 uint8_t rx_index = 0;
 
+
+volatile uint8_t cmd_ready = 0;
+char command_local_buffer[RX_BUFFER_SIZE];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,17 +72,43 @@ static void MX_TIM2_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
+void task_command(void);
+void task_thermostat(void);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void task_command(void)
+{
+    if(cmd_ready == 1)
+    {
+        __disable_irq();         // protect buffer copy
 
+        strcpy(command_local_buffer, rx_buffer);
+        rx_index = 0;
+        cmd_ready = 0;
+
+        __enable_irq();
+
+        command_processor_process(command_local_buffer);
+    }
+}
 /* USER CODE END 0 */
 
 void task_hello(void)
 {
-	platform_uart_send("Scheduler Task Running\r\n");
+    static uint32_t counter = 0;
+
+    counter++;
+
+    if(counter >= 40)   // 40 × 25ms ≈ 1 second
+    {
+        platform_uart_send("Scheduler Running\r\n");
+        counter = 0;
+    }
 }
+
 /**
   * @brief  The application entry point.
   * @retval int
@@ -116,7 +148,11 @@ int main(void)
 
   event_queue_init();
   scheduler_init();
+
+
   scheduler_add_task(task_hello, 5);
+  scheduler_add_task(task_command, 1);
+  scheduler_add_task(task_thermostat, 1);
 
   // Enable UART Interrupt
   HAL_UART_Receive_IT(&huart2, &rx_char, 1);
@@ -126,35 +162,13 @@ int main(void)
   event_t test_event = {EVENT_TEMP_UPDATE, 28};
   event_queue_push(test_event);
 
-
-  command_processor_process("TEMP 25");
-
+  thermostat_controller_init();
   /* Infinite loop */
+
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-	HAL_GPIO_TogglePin(GPIOA, HEATER_RELAY_Pin);
-	HAL_Delay(1000);
-	/* platform_uart_send("Thermostat Running\r\n"); */
-	scheduler_tick();
 	scheduler_run();
-
-	event_t event;
-
-	if (event_queue_pop(&event) == 0)
-    {
-        switch(event.type)
-        {
-        	case EVENT_SET_TEMPERATURE:
-        		platform_uart_send("Event: Set Temperature\r\n");
-        		break;
-
-        	case EVENT_TEMP_UPDATE:
-        		platform_uart_send("Event: Temperature Update\r\n");
-        		break;
-        }
-    }
 	/* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -379,27 +393,43 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
+/* TICK INTO TIM2 ISR */
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if(htim->Instance == TIM2)
+    {
+        scheduler_tick();
+    }
+}
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     if (huart->Instance == USART2)
     {
-        if (rx_char == '\r' || rx_char == '\n')
-        {
-            if (rx_index > 0)   /
-            {
-                rx_buffer[rx_index] = '\0';
-                command_processor_process(rx_buffer);
-                rx_index = 0;
-            }
-        }
-        else
-        {
-            if (rx_index < RX_BUFFER_SIZE - 1)
-            {
-                rx_buffer[rx_index++] = rx_char;
-            }
-        }
+    	if (rx_char == '\r' || rx_char == '\n')
+    	{
+    	    if (rx_index > 0)
+    	    {
+    	        rx_buffer[rx_index] = '\0';
+    	        cmd_ready = 1;
+    	    }
+    	}
+    	else
+    	{
+    	    if (rx_index < RX_BUFFER_SIZE - 1)
+    	    {
+    	        rx_buffer[rx_index++] = rx_char;
+    	    }
+    	}
 
         HAL_UART_Receive_IT(&huart2, &rx_char, 1);
     }
+}
+
+
+void task_thermostat(void)
+{
+    thermostat_controller_process_event();
 }
