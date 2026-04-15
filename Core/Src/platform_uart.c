@@ -22,7 +22,5 @@ void platform_uart_send(const char *msg)
 	HAL_UART_Transmit(&huart2,
 					  (uint8_t*)msg,
 					  len,
-					  HAL_MAX_DELAY);
+					  10);
 }
-
-
