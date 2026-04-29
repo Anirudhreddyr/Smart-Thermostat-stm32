@@ -32,23 +32,38 @@ void thermostat_controller_process_event(void)
 		if (event.type == EVENT_TEMP_UPDATE)
 		{
 			/* Simulate temperature reading */
-			current_temp++;
+			 current_temp = event.data; //Bug fixed  controller is IGNORING the	 data.
 
-			if (current_temp < target_temp)
+		#define HYSTERESIS 1
+
+		static uint8_t heater_state = 0;
+
+		if (heater_state == 0)
+		{
+			// Heater OFF → check ON
+			if (current_temp <= (target_temp - HYSTERESIS))
 			{
 				HAL_GPIO_WritePin(GPIOA, HEATER_RELAY_Pin, GPIO_PIN_SET);
 				HAL_GPIO_WritePin(GPIOA, FAN_RELAY_Pin, GPIO_PIN_RESET);
 
+				heater_state = 1;
+
 				platform_uart_send("Heating ON\r\n");
 			}
-			else
+		}
+		else
+		{
+			// Heater ON → check OFF
+			if (current_temp >= (target_temp + HYSTERESIS))
 			{
 				HAL_GPIO_WritePin(GPIOA, HEATER_RELAY_Pin, GPIO_PIN_RESET);
 				HAL_GPIO_WritePin(GPIOA, FAN_RELAY_Pin, GPIO_PIN_SET);
 
+				heater_state = 0;
+
 				platform_uart_send("Cooling ON\r\n");
 			}
 		}
+	  }
 	}
-}
-
+}tes
