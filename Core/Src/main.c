@@ -27,6 +27,7 @@
 #include "command_processor.h"
 #include "scheduler.h"
 #include "thermostat_controller.h"
+#include "temp_sensor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -74,7 +75,7 @@ static void MX_USART2_UART_Init(void);
 
 void task_command(void);
 void task_thermostat(void);
-
+void temp_sensor_task(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -148,11 +149,12 @@ int main(void)
 
   event_queue_init();
   scheduler_init();
-
+  temp_sensor_init();
 
   scheduler_add_task(task_hello, 5);
   scheduler_add_task(task_command, 1);
   scheduler_add_task(task_thermostat, 1);
+  scheduler_add_task(temp_sensor_task, 1);
 
   // Enable UART Interrupt
   HAL_UART_Receive_IT(&huart2, &rx_char, 1);
